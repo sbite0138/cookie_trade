@@ -113,6 +113,8 @@ def simurate_trade(item_id, buy_price, sell_price):
         elif item.val >= sell_price and have_stock == True:
             profit += item.val
             have_stock = False
+        print(item.val, buy_price, sell_price, profit +
+              item.val if have_stock else profit, have_stock)
     profit += item.val if have_stock else 0
     return profit
 
@@ -122,16 +124,8 @@ def evaluate_param(item_id, buy_price, sell_price):
     # for i in range(1000):
     #     profit = simurate_trade(item_id, buy_price, sell_price)
     #     profits.append(profit)
-    profits = joblib.Parallel(n_jobs=-1)(
-        joblib.delayed(simurate_trade)(item_id, buy_price, sell_price) for _ in range(1000))
-    # print(profits)
-    return median(profits)
+    profit = simurate_trade(item_id, buy_price, sell_price)
+    print(profit)
 
 
-# plt.hist(profits, bins="auto")
-# plt.savefig('test.png')
-for id in tqdm(range(18), leave=False):
-    for buy_price in tqdm(range(5, 200, 5), leave=False):
-        for sell_price in tqdm(range(5, 200, 5), leave=False):
-            print(id, buy_price, sell_price,
-                  evaluate_param(id, buy_price, sell_price))
+evaluate_param(0, 100, 5)
