@@ -1,7 +1,7 @@
 import random
-
+import joblib
 import math
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
 from statistics import median
 
@@ -114,12 +114,21 @@ def simurate_trade(item_id, buy_price, sell_price):
     return profit
 
 
-profits = []
-for i in range(1000):
-    profit = simurate_trade(0, 5, 50)
-    profits.append(profit)
-    print(profit)
-plt.hist(profits, bins="auto")
-plt.savefig('test.png')
+def evaluate_param(item_id, buy_price, sell_price):
+    profits = []
+    # for i in range(1000):
+    #     profit = simurate_trade(item_id, buy_price, sell_price)
+    #     profits.append(profit)
+    profits = joblib.Parallel(n_jobs=-1)(
+        joblib.delayed(simurate_trade)(item_id, buy_price, sell_price) for _ in range(1000))
+    # print(profits)
+    return median(profits)
 
-print('median ', median(profits))
+
+# plt.hist(profits, bins="auto")
+# plt.savefig('test.png')
+for id in range(18):
+    for buy_price in range(5, 100, 5):
+        for sell_price in range(100, 200, 5):
+            print(id, buy_price, sell_price,
+                  evaluate_param(id, buy_price, sell_price))
