@@ -1,0 +1,125 @@
+import random
+
+import math
+from matplotlib import pyplot as plt
+
+from statistics import median
+
+BANK_LEVEL = 10
+DRAGON_BOOST = 1
+
+
+def get_resting_val(id):
+    return 10*(id+1)+BANK_LEVEL-1
+
+
+class Item():
+    def __init__(self, id):
+        self.id = id
+        self.stock = 0
+        self.mode = random.choice([0, 1, 1, 2, 2, 3, 4, 5])
+        self.dur = math.floor(10 + random.random() * 690)
+        self.val = get_resting_val(id)
+        self.d = random.random() * 0.2 - 0.1
+        self.vals = [self.val, self.val - self.d]
+        self.last = 0
+
+    def tick(self):
+        globD = 0
+        globP = random.random()
+        if (random.random() < 0.1 + 0.1 * DRAGON_BOOST):
+            globD = (random.random() - 0.5) * 2
+        self.last = 0
+        self.d *= 0.97 + 0.01 * DRAGON_BOOST
+        if (self.mode == 0):
+            self.d *= 0.95
+            self.d += 0.05 * (random.random() - 0.5)
+        elif (self.mode == 1):
+            self.d *= 0.99
+            self.d += 0.05 * (random.random() - 0.1)
+        elif (self.mode == 2):
+            self.d *= 0.99
+            self.d -= 0.05 * (random.random() - 0.1)
+        elif (self.mode == 3):
+            self.d += 0.15 * (random.random() - 0.1)
+            self.val += random.random() * 5
+        elif (self.mode == 4):
+            self.d -= 0.15 * (random.random() - 0.1)
+            self.val -= random.random() * 5
+        elif (self.mode == 5):
+            self.d += 0.3 * (random.random() - 0.5)
+        self.val += (get_resting_val(self.id) - self.val) * 0.01
+
+        if (globD != 0 and random.random() < globP):
+            self.val -= (1 + self.d * math.pow(random.random(), 3) * 7) * globD
+            self.val -= globD * (1 + math.pow(random.random(), 3) * 7)
+            self.d += globD * (1 + random.random() * 4)
+            self.dur = 0
+        self.val += math.pow((random.random() - 0.5) * 2, 11) * 3
+        self.d += 0.1 * (random.random() - 0.5)
+        if (random.random() < 0.15):
+            self.val += (random.random() - 0.5) * 3
+        if (random.random() < 0.03):
+            self.val += (random.random() - 0.5) * (10 + 10 * DRAGON_BOOST)
+        if (random.random() < 0.1):
+            self.d += (random.random() - 0.5) * (0.3 + 0.2 * DRAGON_BOOST)
+        if (self.mode == 5):
+            if (random.random() < 0.5):
+                self.val += (random.random() - 0.5) * 10
+            if (random.random() < 0.2):
+                self.d = (random.random() - 0.5) * (2 + 6 * DRAGON_BOOST)
+        if (self.mode == 3 and random.random() < 0.3):
+            self.d += (random.random() - 0.5) * 0.1
+            self.val += (random.random() - 0.7) * 10
+        if (self.mode == 3 and random.random() < 0.03):
+            self.mode = 4
+        if (self.mode == 4 and random.random() < 0.3):
+            self.d += (random.random() - 0.5) * 0.1
+            self.val += (random.random() - 0.3) * 10
+        if (self.val > (100 + (BANK_LEVEL - 1) * 3) and self.d > 0):
+            self.d *= 0.9
+        self.val += self.d
+
+        if (self.val < 5):
+            self.val += (5 - self.val) * 0.5
+        if (self.val < 5 and self.d < 0):
+            self.d *= 0.95
+        self.val = max(self.val, 1)
+        self.vals.append(self.val)
+        self.dur -= 1
+        if (self.dur <= 0):
+            self.dur = math.floor(10 + random.random() *
+                                  (690 - 200 * DRAGON_BOOST))
+            if (random.random() < DRAGON_BOOST and random.random() < 0.5):
+                self.mode = 5
+            elif (random.random() < 0.7 and (self.mode == 3 or self.mode == 4)):
+                self.mode = 5
+            else:
+                self.mode = random.choice([0, 1, 1, 2, 2, 3, 4, 5])
+
+
+def simurate_trade(item_id, buy_price, sell_price):
+    item = Item(item_id)
+    max_tick = 1000
+    buy_amount = 1000
+    last_buy_price = -1
+    profit = 0
+    for i in range(max_tick):
+        item.tick()
+        if item.val <= buy_price and last_buy_price == -1:
+            last_buy_price = item.val
+        elif item.val >= sell_price and last_buy_price != -1:
+            profit += (item.val-last_buy_price)
+            last_buy_price = -1
+    return profit
+
+
+profits = []
+for i in range(1000):
+    profit = simurate_trade(0, 5, 50)
+    profits.append(profit)
+    print(profit)
+plt.hist(profits, bins="auto")
+plt.savefig('test.png')
+
+print('median ', median(profits))
